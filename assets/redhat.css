@@ -1,0 +1,10 @@
+body {
+	background-image: url(rh_web_logo_small.png);
+	background-repeat: no-repeat;
+	background-position: 20px 20px;
+}
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+	color: #cc0000;
+}
+
