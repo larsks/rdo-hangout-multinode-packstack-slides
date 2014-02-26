@@ -1,5 +1,6 @@
 # RDO Hangout: Multinode OpenStack with Packstack
 
+February 27, 2014  
 Lars Kellogg-Stedman <lars@redhat.com>
 
 ---
@@ -15,6 +16,9 @@ A multinode OpenStack install using packstack
 ---
 
 ## What is packstack?
+
+A command-line tool for automating the deployment of simple OpenStack
+clouds.
 
 - Single host (`--allinone`) or multinode
 - Proof of Concept ("PoC") deployments
@@ -103,6 +107,47 @@ default like this:
 
 ---
 
+<!-- -->
+
+    # packstack --answer-file packstack-answers.txt 
+    Welcome to Installer setup utility
+    Packstack changed given value  to required value /root/.ssh/id_rsa.pub
+
+    Installing:
+    Clean Up...                                            [ DONE ]
+    Setting up ssh keys...                                 [ DONE ]
+    Discovering hosts' details...                          [ DONE ]
+    Adding pre install manifest entries...                 [ DONE ]
+    Adding MySQL manifest entries...                       [ DONE ]
+    Adding QPID manifest entries...                        [ DONE ]
+    Adding Keystone manifest entries...                    [ DONE ]
+    Adding Glance Keystone manifest entries...             [ DONE ]
+    Adding Glance manifest entries...                      [ DONE ]
+    Installing dependencies for Cinder...                  [ DONE ]
+    Adding Cinder Keystone manifest entries...             [ DONE ]
+    .
+    .
+    .
+
+
+<!-- -->
+
+    Finalizing...                                          [ DONE ]
+
+     **** Installation completed successfully ******
+    
+    
+    Additional information:
+     * Time synchronization installation was skipped. Please note that unsynchronized time on server instances might be problem for some OpenStack components.
+     * Did not create a cinder volume group, one already existed
+     * File /root/keystonerc_admin has been created on OpenStack client host 10.15.0.4. To use the command line tools you need to source the file.
+     * To access the OpenStack Dashboard browse to http://10.15.0.4/dashboard.
+    Please, find your login credentials stored in the keystonerc_admin in your home directory.
+     * The installation log file is available at: /var/tmp/packstack/20140226-155910-suyHHe/openstack-setup.log
+     * The generated manifests are available at: /var/tmp/packstack/20140226-155910-suyHHe/manifests
+
+---
+
 # Post-install Configuration
 
 ---
@@ -182,6 +227,16 @@ Now we should have something like:
     | 77cafb07-a793-41cb-8a96-58d04408e10d | net0     | f0beab82-0673-40eb-8934-68acc6bd635a 10.0.0.0/24 |
     | e1de0593-73d4-427d-89f6-9c7b0e7c7ef9 | external | 57c65000-0782-40c3-906e-09d9a4ad5113             |
     +--------------------------------------+----------+--------------------------------------------------+
+
+---
+
+## Create security rules
+
+Make sure we allow ICMP and SSH traffic to instances:
+
+    # neutron security-group-rule-create --protocol icmp default
+    # neutron security-group-rule-create --protocol tcp \
+      --port-range-min 22 --port-range-max 22 default
 
 ---
 
