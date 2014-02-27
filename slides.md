@@ -335,6 +335,23 @@ step:
 
 ---
 
+## You can't get there from here...
+
+The instance is up and has an ip on an internal network...
+
+...but there's no way for us to get there from here.
+
+
+## ...or can you?
+
+Actually, we can get at the instance from inside the appropriate
+network namespace on the network host:
+
+    # ip netns exec dhcp-77cafb07-a793-41cb-8a96-58d04408e10d \
+      ping ...
+
+---
+
 ## Create and assign a floating ip
 
 Allocate a floating ip address from the *external* network:
