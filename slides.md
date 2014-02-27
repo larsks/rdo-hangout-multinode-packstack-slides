@@ -3,6 +3,8 @@
 February 27, 2014  
 Lars Kellogg-Stedman <lars@redhat.com>
 
+http://goo.gl/Yvmd0P
+
 ---
 
 ## What are we going to do today?
@@ -15,6 +17,18 @@ A multinode OpenStack install using packstack
 
 ---
 
+## Our tools
+
+- [CentOS] 6.5
+- [RDO] Havana
+- [Packstack][]
+
+[centos]: http://www.centos.org/
+[rdo]: http://openstack.redhat.com/
+[packstack]: https://wiki.openstack.org/wiki/Packstack
+
+---
+
 ## What is packstack?
 
 A command-line tool for automating the deployment of simple OpenStack
@@ -24,14 +38,15 @@ clouds.
 - Proof of Concept ("PoC") deployments
 
 
+Not really designed for production use:
+
 - Servers must be pre-installed
-- No HA
-- Little scalability
+- No high-availability
+- No scalability
 - No shared filesystems
 
----
 
-## Supported platforms
+Supported platforms
 
 - RHEL
 - CentOS
@@ -39,9 +54,20 @@ clouds.
 
 ---
 
+![Intermission](assets/intermission.jpg)
+
+---
+
 ## Architecture Overview
 
 ![Architecture overview](assets/overview.svg)
+
+
+Specifically:
+
+- Neutron networking
+- OpenVswitch plugin
+- GRE tenant networks
 
 ---
 
@@ -67,6 +93,13 @@ clouds.
 
 ---
 
+## Set up ssh
+
+Make sure that you can ssh as `root` to all your hosts from wherever
+you're running `packstack`.
+
+---
+
 ## Install packstack
 
 Make the RDO repositories available:
@@ -81,8 +114,12 @@ And install `packstack`:
 
 ## The answers file
 
-You can set all sorts of parameters on the command line, but I like to
-generate an "answers" file and edit it:
+You can set all sorts of parameters on the command line...
+
+    packstack --allinone --os-quantum-install=y --provision-demo=n \
+      --provision-all-in-one-ovs-bridge=n
+
+...but I like to generate an "answers" file and edit it:
 
     # packstack --gen-answer-file packstack-answers.txt
 
@@ -101,6 +138,11 @@ default like this:
     CONFIG_NEUTRON_OVS_TUNNEL_RANGES=1000:3000
     CONFIG_NEUTRON_OVS_TUNNEL_IF=eth2
 
+
+`CONFIG_NEUTRON_OVS_TUNNEL_IF` is used to configure
+the source ip address for GRE tunnels via the Facter fact
+`ipaddress_<interfacename>` (e.g., `ipaddress_eth2`).
+
 ---
 
 # Run packstack
@@ -109,7 +151,7 @@ default like this:
 
 <!-- -->
 
-    # packstack --answer-file packstack-answers.txt 
+    # packstack --answer-file packstack-answers.txt
     Welcome to Installer setup utility
     Packstack changed given value  to required value /root/.ssh/id_rsa.pub
 
@@ -152,9 +194,21 @@ default like this:
 
 ---
 
+## Fix Horizon
+
+You may need to fix [ALLOWED_HOSTS][]:
+
+    # sed -i '/^ALLOWED_HOSTS/ s/=.*/= [ "*" ]/' \
+      /etc/openstack-dashboard/local_settings 
+    # service httpd restart
+
+[ALLOWED_HOSTS]: https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
+
+---
+
 Source your `admin` credentials:
 
-    # . /root/keystonrc_admin
+    # . /root/keystonerc_admin
 
 Create a disk image:
 
@@ -198,16 +252,36 @@ And store the credentials in `/root/keystonerc_demo`:
 
 ---
 
-## Create tenant networks
+## Switch credentials
 
-Use the non-admin user we just created:
+From this point on we're going to be operating as the "demo" user:
 
     # . /root/keystonerc_demo
+
+---
+
+## Create an ssh keypair
+
+Create a keypair:
+
+    # ssh-keygen -t rsa -b 2048 -N '' -f id_rsa_demo
+
+
+Upload the public key to Nova:
+
+    # nova keypair-add --pub-key id_rsa_demo.pub demo
+
+We'll use this later on when logging in instances.
+
+---
+
+## Create tenant networks
 
 Create a private network:
 
     # neutron net-create net0
-    # neutron subnet-create --name net0-subnet0 net0 10.0.0.0/24
+    # neutron subnet-create --name net0-subnet0 \
+      --dns-nameserver 8.8.8.8 net0 10.0.0.0/24
 
 
 Create a router and connect it to the private network and the external
@@ -245,8 +319,9 @@ Make sure we allow ICMP and SSH traffic to instances:
 We'll need the UUID for network `net0` that we created in the previous
 step:
 
-    # nova boot --flavor m1.nano --image cirros \
-      --nic net-id=77cafb07-a793-41cb-8a96-58d04408e10d test0
+    # nova boot --poll --flavor m1.nano --image cirros \
+      --nic net-id=77cafb07-a793-41cb-8a96-58d04408e10d \
+      --key-name demo test0
 
 ---
 
@@ -260,7 +335,7 @@ Allocate a floating ip address from the *external* network:
     +-------------+-------------+----------+----------+
     | 172.16.13.3 | None        | None     | external |
     +-------------+-------------+----------+----------+
-    
+
 Assign it to the new instance:
 
     # nova add-floating-ip test0 172.16.13.3
@@ -278,4 +353,17 @@ In our demo:
 
     # ip addr add 172.16.13.1/24 dev br-ex
     # iptables -t nat -I POSTROUTING 1 -s 172.16.13.0/24 -j MASQUERADE
+
+---
+
+![The End](assets/theend.jpg)
+
+---
+
+## About this hangout
+
+- Source for slides is https://github.com/larsks/rdo-hangout-multinode-packstack-slides/
+- Source for system configuration is https://github.com/larsks/rdo-hangout-multinode-packstack-ansible/
+
+[freenode]: http://freenode.net/
 
