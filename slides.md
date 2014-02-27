@@ -391,6 +391,8 @@ In our demo:
 
 - Source for slides is https://github.com/larsks/rdo-hangout-multinode-packstack-slides/
 - Source for system configuration is https://github.com/larsks/rdo-hangout-multinode-packstack-ansible/
+- The [packstack-answers.txt][] file used in this demo
 
 [freenode]: http://freenode.net/
+[packstack-answers.txt]: assets/packstack-answers.txt
 
