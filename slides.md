@@ -190,6 +190,16 @@ the source ip address for GRE tunnels via the Facter fact
 
 ---
 
+## What just happened?
+
+- Lots of packages installed
+- Configuration in `/etc/{nova,glance,cinder,neutron,...}/`
+- Firewall rules for all services
+- MySQL users and databases created
+- Services started
+
+---
+
 # Post-install Configuration
 
 ---
