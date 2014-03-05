@@ -226,7 +226,7 @@ Create a disk image:
       --copy-from http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-disk.img \
       --is-public true \
       --container-format bare \
-      --disk-format raw \
+      --disk-format qcow2 \
       --name cirros
 
 ---
